@@ -25,13 +25,25 @@
   #tooltip { position:absolute; pointer-events:none; background:#2b2b2b; border:1px solid #555;
              border-radius:8px; padding:8px 10px; font-size:12px; max-width:280px; opacity:0;
              transition:opacity .12s; }
+  #aud-wrap { position:relative; }
+  #aud { cursor:pointer; }
+  #aud-list { display:none; position:absolute; top:100%; left:0; z-index:10; min-width:140px;
+              max-height:220px; overflow-y:auto; background:#2b2b2b; border:1px solid #555; border-radius:6px; }
+  #aud-list.open { display:block; }
+  #aud-list div { padding:6px 10px; font-size:12px; cursor:pointer; }
+  #aud-list div:hover { background:#534AB7; }
 </style>
 </head>
 <body>
 
 <div id="panel">
   <label>시각 <input placeholder="빨간, 둥근" disabled></label>
-  <label>청각 <input placeholder="사과" disabled></label>
+  <label>청각
+    <div id="aud-wrap">
+      <input id="aud" placeholder="키워드 선택" readonly>
+      <div id="aud-list"></div>
+    </div>
+  </label>
   <label>맛 <input placeholder="단맛" disabled></label>
   <label>후각 <input placeholder="" disabled></label>
   <label>촉각 <input placeholder="단단한" disabled></label>
@@ -204,6 +216,32 @@ const sim = d3.forceSimulation(nodes)
            .attr('x2', d=>d.target.x).attr('y2', d=>d.target.y);
     nodeSel.attr('transform', d => `translate(${d.x},${d.y})`);
   });
+const audInput = document.getElementById('aud');
+const audList = document.getElementById('aud-list');
+const audMap = raw.token_maps['1'] || {};
+const AUD_WORDS = Object.keys(audMap);
+
+AUD_WORDS.forEach(word => {
+  const item = document.createElement('div');
+  item.textContent = word;
+  item.addEventListener('click', e => {
+    e.stopPropagation();
+    if (!(word in audMap)) return;
+    audInput.value = word;
+    audList.classList.remove('open');
+    nodeSel.filter(n => n.id === audMap[word]).dispatch('click');
+  });
+  audList.appendChild(item);
+});
+
+audInput.addEventListener('click', e => {
+  e.stopPropagation();
+  audList.classList.toggle('open');
+});
+['keydown', 'paste', 'drop', 'beforeinput'].forEach(ev =>
+  audInput.addEventListener(ev, e => e.preventDefault())
+);
+document.addEventListener('click', () => audList.classList.remove('open'));
 </script>
 </body>
 </html>
